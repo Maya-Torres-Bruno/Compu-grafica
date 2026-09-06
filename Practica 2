@@ -38,7 +38,7 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Practica 2 - Vista: PERSPECTIVA", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Practica 2 - Vista: PERSPECTIVA", nullptr, nullptr);
 
     if (nullptr == window) {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -151,7 +151,8 @@ int main() {
 
         if (isPerspective) {
             projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
-        } else {
+        }
+        else {
             // Tamaño visible vertical para que los 7 cubos encajen con margen
             float orthoHeight = 260.0f;
             float orthoWidth = orthoHeight * aspectRatio;
@@ -161,7 +162,7 @@ int main() {
 
         // 2. Matriz de vista (centrada en el origen para ambos modos)
         glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -500.0f));
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -655.0f));
 
         GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
         GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
