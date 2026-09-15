@@ -459,6 +459,26 @@ int main() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
 
+	// --- Configurar el VAO Azul oscuro (Índice 5) ---
+	glBindVertexArray(VAOs[5]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[5]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesAzulOscuro), verticesAzulOscuro, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	// --- Configurar el VAO naranja (Índice 6) ---
+	glBindVertexArray(VAOs[6]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[6]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesNaranja), verticesNaranja, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
 	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
 
 
@@ -498,7 +518,7 @@ int main() {
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 
-		
+
 		// ==========================================
 // 1. DIBUJAR TODO LO VERDE (VAOs[0])
 // ==========================================
@@ -506,7 +526,7 @@ int main() {
 
 		// Cabeza
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(2.0f, 1.2f, 1.0f));
+		model = glm::scale(model, glm::vec3(2.0f, 1.2f, 1.15f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -517,16 +537,16 @@ int main() {
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Oreja Izquierda
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.15f, 2.2f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.15f, 2.50f, 0.0f));
 		// Opcional: model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, glm::vec3(0.3f, 0.8f, 0.3f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.8f, 0.15f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Oreja Derecha
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(1.15f, 2.2f, 0.0f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(1.15f, 2.50f, 0.0f));
 		// Opcional: model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, glm::vec3(0.3f, 0.8f, 0.3f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.8f, 0.15f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -556,16 +576,27 @@ int main() {
 
 		// Pierna Izquierda
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.4f, -0.6f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.5f, 0.8f, 0.5f));
+		model = glm::scale(model, glm::vec3(1.0f, 0.8f, 0.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Pierna Derecha
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, -0.6f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.5f, 0.8f, 0.5f));
+		model = glm::scale(model, glm::vec3(1.0f, 0.8f, 0.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		
+		// Manga izquierda
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.05f, 0.80f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.36f, 0.80f, 0.36f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// Manga Derecha
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(1.05f, 0.80f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.36f, 0.80f, 0.36f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// ==========================================
 // DIBUJAR LO MORADO (Cuello) - Supongamos que es VAOs[2]
@@ -582,19 +613,19 @@ int main() {
 		glBindVertexArray(VAOs[3]);
 
 		// Ojo Central
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.2f, 0.55f)); // Z=0.55 para salir de la cara
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.2f, 0.60f)); // Z=0.60 para salir de la cara
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Ojo Izquierdo
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f, 2.2f, 0.55f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f, 2.2f, 0.60f));
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Ojo Derecho
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.6f, 2.2f, 0.55f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.6f, 2.2f, 0.60f));
 		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -605,23 +636,71 @@ int main() {
 		glBindVertexArray(VAOs[4]);
 		// Z=0.60 para resaltar sobre el blanco del ojo
 		// Pupila Central
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.2f, 0.60f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.2f, 0.65f));
 		model = glm::scale(model, glm::vec3(0.15f, 0.15f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// (Aplica la misma lógica para las pupilas izquierda y derecha, cambiando la X)
 		// Pupila Izquierda
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f, 2.2f, 0.60f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f, 2.2f, 0.65f));
 		model = glm::scale(model, glm::vec3(0.15f, 0.15f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Pupila Derecha
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.6f, 2.2f, 0.60f));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.6f, 2.2f, 0.65f));
 		model = glm::scale(model, glm::vec3(0.15f, 0.15f, 0.1f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+		// ==========================================
+// DIBUJAR LO AZUL OSCURO (Cinturón y Zapatos) - VAOs[5]
+// ==========================================
+		glBindVertexArray(VAOs[5]);
+
+		// 1. Cinturón
+		// Lo bajamos a Y = -0.2 para que quede justo debajo del torso
+		// Lo hacemos un poco más ancho (X = 1.85) y profundo (Z = 1.05) que el torso para que resalte
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.2f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.85f, 0.2f, 1.05f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// 2. Zapato Izquierdo
+		// La pierna izquierda está en X = -0.4, bajamos a Y = -1.05 para la base
+		// Lo empujamos hacia adelante en Z = 0.10 para simular la punta del zapato
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f, -1.05f, 0.10f));
+		model = glm::scale(model, glm::vec3(0.95f, 0.2f, 0.95f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// 3. Zapato Derecho
+		// Mismos valores que el izquierdo, pero invertimos la posición en X (0.4 positivo)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.6f, -1.05f, 0.10f));
+		model = glm::scale(model, glm::vec3(0.95f, 0.2f, 0.95f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// ==========================================
+// DIBUJAR LO NARANJA (el parche) - VAOs[6]
+// ==========================================
+		glBindVertexArray(VAOs[6]);
+
+		// Posición: 
+		// X = 0.5f (Lo movemos a la derecha del pecho)
+		// Y = 0.4f (A una altura media-alta en el torso)
+		// Z = 0.52f (La cara frontal del torso está en Z=0.5, así que 0.52 lo pone justo encima sin parpadear)
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.8f, 0.52f));
+
+		// Escala: Lo hacemos como un parche cuadrado, muy delgado en el eje Z
+		model = glm::scale(model, glm::vec3(0.3f, 0.25f, 0.05f));
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
 		model = glm::mat4(1.0f);
 
@@ -659,3 +738,4 @@ void Inputs(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 		rot -= 0.1f;
 }
+
