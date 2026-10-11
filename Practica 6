@@ -30,7 +30,7 @@ int SCREEN_WIDTH, SCREEN_HEIGHT;
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
 void DoMovement();
-void ActualizarAnimacion(); // Prototipo de la animación
+void ActualizarAnimacion();
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -42,7 +42,7 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 // ==========================================
-// VARIABLES DE ESTADO Y CONTROL DE ANIMACIÓN
+// MÁQUINA DE ESTADOS Y CONTROL DE ANIMACIÓN
 // ==========================================
 enum EstadoPokebola {
     CERRADA,
@@ -55,14 +55,17 @@ enum EstadoPokebola {
 
 EstadoPokebola estadoActual = CERRADA;
 
-// Ángulos actuales de rotación
-float rotY = 0.0f;       // Giro horizontal sobre el eje Y (0 a 360 grados)
+// Ángulos de rotación
+float rotY = 0.0f;       // Giro sobre su propio eje Y (0° a 360°)
 float rotTapa = 0.0f;    // Ángulo de apertura de la tapa
 
 // Velocidades de animación (en grados por segundo)
-const float VELOCIDAD_GIRO = 360.0f;   // Realiza el giro de 360° en 1 segundo
-const float VELOCIDAD_TAPA = 120.0f;   // Abre o cierra la tapa en ~0.5 segundos
-const float ANGULO_MAX_TAPA = 60.0f;   // Qué tanto abre la tapa (puedes cambiarlo a 70 o 90)
+const float VELOCIDAD_GIRO = 360.0f;   // 1 vuelta completa en 1 segundo
+const float VELOCIDAD_TAPA = 120.0f;   // Apertura/cierre en ~0.5 segundos
+const float ANGULO_MAX_TAPA = 60.0f;   // Grados de apertura de la tapa
+
+// Pivote exacto del centro de la base obtenido de Maya (Z = 0.99f)
+const glm::vec3 pivoteBase = glm::vec3(0.0f, 0.0f, 0.99f);
 
 
 int main()
@@ -91,7 +94,7 @@ int main()
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetCursorPosCallback(window, MouseCallback);
 
-    // Descomentar para capturar el ratón con la cámara sintética
+    // Descomentar si deseas capturar el mouse para la cámara sintética
     // glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
     glewExperimental = GL_TRUE;
@@ -104,13 +107,10 @@ int main()
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glEnable(GL_DEPTH_TEST);
 
-    // Compilación de shaders
+    // Shader y Modelos
     Shader shader("Shaders/modelLoading.vs", "Shaders/modelLoading.frag");
-
-    // Carga de modelos
     Model PokeBase((char*)"Models/Pokebola/PokeBase.obj");
     Model PokeTapa((char*)"Models/Pokebola/PokeTapa.obj");
-
 
     // Game loop
     while (!glfwWindowShouldClose(window))
@@ -122,35 +122,41 @@ int main()
 
         glfwPollEvents();
         DoMovement();
-
-        // 1. ACTUALIZAR PASO A PASO LA ANIMACIÓN
         ActualizarAnimacion();
 
-        // Limpiar buffers
+        // Clear buffers
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.Use();
 
-        // Matrices de proyección y vista
+        // Proyección y Vista
         glm::mat4 projection = glm::perspective(camera.GetZoom(), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-        // 2. MATRIZ BASE (Giro global de la Pokébola sobre su eje Y)
-        glm::mat4 modelGeneral = glm::mat4(1.0f);
-        modelGeneral = glm::rotate(modelGeneral, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
+        // ==========================================
+        // TRANSFORMACIONES JERÁRQUICAS
+        // ==========================================
 
-        // 3. DIBUJAR LA BASE
-        glm::mat4 modelBase = modelGeneral;
+        // 1. PADRE: BASE
+        // Trasladar al centro de la base -> Rotar en Y -> Regresar
+        // Esto garantiza que el giro de 360° sea sobre su centro geométrico sin desplazarse
+        glm::mat4 modelBase = glm::mat4(1.0f);
+        //modelBase = glm::translate(modelBase, pivoteBase);
+        modelBase = glm::rotate(modelBase, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
+        modelBase = glm::translate(modelBase, -pivoteBase);
+
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelBase));
         PokeBase.Draw(shader);
 
-        // 4. DIBUJAR LA TAPA (Hereda el giro en Y y añade su rotación de bisagra)
-        glm::mat4 modelTapa = modelGeneral;
-        // Rota sobre el eje X hacia atrás (ajusta el signo según la orientación de tu modelo)
+        // 2. HIJO: TAPA
+        // Inicia desde la transformación del padre para girar en bloque los 360°
+        glm::mat4 modelTapa = modelBase;
+        // Rota sobre el origen (0,0,0) en X, que es donde está la bisagra de la tapa en Maya
         modelTapa = glm::rotate(modelTapa, glm::radians(-rotTapa), glm::vec3(1.0f, 0.0f, 0.0f));
+
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelTapa));
         PokeTapa.Draw(shader);
 
@@ -162,18 +168,18 @@ int main()
 }
 
 
-// Función encargada de avanzar la rotación y apertura según el estado
+// Función encargada de avanzar la secuencia de estados
 void ActualizarAnimacion()
 {
     switch (estadoActual)
     {
     case GIRANDO_PARA_ABRIR:
-        // Gira hacia la derecha (sentido horario, ángulo decreciente)
+        // Giro a la derecha (sentido horario sobre Y)
         rotY -= VELOCIDAD_GIRO * deltaTime;
         if (rotY <= -360.0f)
         {
-            rotY = 0.0f;                 // Completó exactamente los 360°
-            estadoActual = ABRIENDO;     // Ahora pasa a abrir la tapa
+            rotY = 0.0f;             // Concluyó los 360° exactos
+            estadoActual = ABRIENDO; // Pasa a abrir la tapa
         }
         break;
 
@@ -181,18 +187,18 @@ void ActualizarAnimacion()
         rotTapa += VELOCIDAD_TAPA * deltaTime;
         if (rotTapa >= ANGULO_MAX_TAPA)
         {
-            rotTapa = ANGULO_MAX_TAPA;   // Alcanzó su tope de apertura
-            estadoActual = ABIERTA;      // Vuelve a estar en reposo (abierta)
+            rotTapa = ANGULO_MAX_TAPA;
+            estadoActual = ABIERTA;  // Concluyó apertura y queda en reposo
         }
         break;
 
     case GIRANDO_PARA_CERRAR:
-        // Gira en sentido contrario (antihorario, ángulo creciente)
+        // Giro en sentido inverso (antihorario sobre Y)
         rotY += VELOCIDAD_GIRO * deltaTime;
         if (rotY >= 360.0f)
         {
-            rotY = 0.0f;                 // Completó exactamente los 360°
-            estadoActual = CERRANDO;     // Ahora pasa a cerrar la tapa
+            rotY = 0.0f;             // Concluyó los 360° exactos
+            estadoActual = CERRANDO; // Pasa a cerrar la tapa
         }
         break;
 
@@ -201,18 +207,16 @@ void ActualizarAnimacion()
         if (rotTapa <= 0.0f)
         {
             rotTapa = 0.0f;
-            estadoActual = CERRADA;      // Vuelve a estar en reposo (cerrada)
+            estadoActual = CERRADA;  // Concluyó cierre y queda en reposo
         }
         break;
 
     default:
-        // En estados CERRADA o ABIERTA no se altera ningún ángulo
         break;
     }
 }
 
 
-// Movimiento de cámara por teclado
 void DoMovement()
 {
     if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])    camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -222,7 +226,6 @@ void DoMovement()
 }
 
 
-// Eventos de teclado
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
@@ -230,9 +233,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
-    // DISPARO DE ANIMACIÓN CON LA BARRA ESPACIADORA:
-    // Solo inicia si está en reposo (CERRADA o ABIERTA).
-    // Si ya está en alguna fase intermedia, este bloque no hace nada, evitando interrupciones.
+    // Solo reacciona si la animación está en reposo (CERRADA o ABIERTA)
+    // Presionar espacio mientras se mueve no tiene ningún efecto
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
         if (estadoActual == CERRADA)
