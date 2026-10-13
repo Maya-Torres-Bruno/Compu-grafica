@@ -45,7 +45,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Proyecto Final - Cama y Buro Andy", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Proyecto Final - Fachada, Cama y Buro Andy", nullptr, nullptr);
     if (!window)
     {
         std::cout << "Error al crear la ventana GLFW" << std::endl;
@@ -73,8 +73,11 @@ int main()
 
     Shader shader("Shaders/modelLoading.vs", "Shaders/modelLoading.frag");
 
-    // Carga de modelos con la ruta corregida
+    // ==========================================================
+    // Carga de modelos
+    // ==========================================================
     std::cout << "Cargando modelos..." << std::endl;
+    Model Fachada((char*)"Models/Fachada/Fachada.obj"); 
     Model Cama((char*)"Models/CamaAndy/Cama.obj");
     Model Buro((char*)"Models/Buro/Nightstand.obj");
     std::cout << "Modelos cargados correctamente." << std::endl;
@@ -99,24 +102,29 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
         // ==========================================================
-        // 1. DIBUJAR LA CAMA
+        // 1. DIBUJAR LA FACHADA
+        // ==========================================================
+        glm::mat4 modelFachada = glm::mat4(1.0f);
+        modelFachada = glm::translate(modelFachada, glm::vec3(0.0f, -0.3f, 0.0f)); // Ajustada a la altura de los muebles
+        modelFachada = glm::scale(modelFachada, glm::vec3(1.0f));
+        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelFachada));
+        Fachada.Draw(shader);
+
+        // ==========================================================
+        // 2. DIBUJAR LA CAMA
         // ==========================================================
         glm::mat4 modelCama = glm::mat4(1.0f);
-        // Posicionada a la derecha
-        modelCama = glm::translate(modelCama, glm::vec3(0.9f, -0.3f, 0.0f));
-        // Escala normal (1.0f)
+        modelCama = glm::translate(modelCama, glm::vec3(1.9f, -0.3f, -1.5f));
         modelCama = glm::scale(modelCama, glm::vec3(1.0f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelCama));
         Cama.Draw(shader);
 
         // ==========================================================
-        // 2. DIBUJAR EL BURÓ (Reducido a escala proporcional a la cama)
+        // 3. DIBUJAR EL BURÓ
         // ==========================================================
         glm::mat4 modelBuro = glm::mat4(1.0f);
-        // Ubicado al lado izquierdo de la cama
-        modelBuro = glm::translate(modelBuro, glm::vec3(-0.9f, -0.3f, 0.0f));
-		modelBuro = glm::rotate(modelBuro, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        // Reducido aproximadamente al 42% del tamaño anterior
+        modelBuro = glm::translate(modelBuro, glm::vec3(.9f, -0.3f, -2.0f));
+        modelBuro = glm::rotate(modelBuro, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         modelBuro = glm::scale(modelBuro, glm::vec3(0.42f));
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelBuro));
         Buro.Draw(shader);
