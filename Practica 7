@@ -1,5 +1,6 @@
 // Std. Includes
 #include <string>
+#include <iostream>
 
 // GLEW
 #include <GL/glew.h>
@@ -12,7 +13,7 @@
 #include "Camera.h"
 #include "Model.h"
 
-// GLM Mathemtics
+// GLM Mathematics
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -20,6 +21,7 @@
 // Other Libs
 #include "SOIL2/SOIL2.h"
 #include "stb_image.h"
+
 // Properties
 const GLuint WIDTH = 800, HEIGHT = 600;
 int SCREEN_WIDTH, SCREEN_HEIGHT;
@@ -29,17 +31,18 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
 void DoMovement();
 
-
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 3.0f, 22.0f));
 bool keys[1024];
 GLfloat lastX = 400, lastY = 300;
 bool firstMouse = true;
 
-
 // Light attributes
-glm::vec3 lightPos(0.5f, 0.5f, 2.5f); //Posicion de la luz
-float movelightPos = 0.0f;
+glm::vec3 lightPos(0.0f, 5.5f, 6.0f); // Posicion de la luz
+float movelightPosX = 0.0f;           // Movimiento en X (K y H)
+float movelightPosY = 0.0f;           // Movimiento en Y (U y J)
+float movelightPosZ = 0.0f;           // Movimiento en Z (O y L)
+
 GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 float rot = 0.0f;
@@ -98,8 +101,6 @@ int main()
     Shader lampshader("Shaders/lamp.vs", "Shaders/lamp.frag");
     Shader lightingShader("Shaders/lighting.vs", "Shaders/lighting.frag");
 
-
-
     // Load models
     Model pokearriba((char*)"Models/Pokeball2/pokearriba.obj");
     Model pokeabajo((char*)"Models/Pokeball2/pokeabajo.obj");
@@ -108,7 +109,7 @@ int main()
     glm::mat4 projection = glm::perspective(camera.GetZoom(), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 
     float vertices[] = {
-      -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
          0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
          0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
          0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -166,7 +167,6 @@ int main()
     glEnableVertexAttribArray(1);
 
     // Load textures
-
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -179,8 +179,6 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 
     image = stbi_load("images/goku.jpg", &textureWidth, &textureHeight, &nrChannels, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
     if (image)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
@@ -206,90 +204,235 @@ int main()
         DoMovement();
 
         // Clear the colorbuffer
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         lightingShader.Use();
         GLint lightPosLoc = glGetUniformLocation(lightingShader.Program, "light.position");
         GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
-        glUniform3f(lightPosLoc, lightPos.x + movelightPos, lightPos.y + movelightPos, lightPos.z + movelightPos);
+        glUniform3f(lightPosLoc, lightPos.x + movelightPosX, lightPos.y + movelightPosY, lightPos.z + movelightPosZ);
         glUniform3f(viewPosLoc, camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
 
-
         // Set lights properties
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "light.ambient"), 0.5f, 0.5f, 0.5f);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "light.diffuse"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "light.ambient"), 0.25f, 0.25f, 0.25f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "light.diffuse"), 0.7f, 0.7f, 0.7f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "light.specular"), 1.0f, 1.0f, 1.0f);
-
 
         glm::mat4 view = camera.GetViewMatrix();
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-        // Set material properties
-        //componentes del material
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 0.0f, 0.0f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 1.0f, 1.0f, 1.0f); //controla la intensidad del reflejo especular (color)
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 50.0f); //controla el tamaño del reflejo especular
-
-
-
-
-
-        // Draw the loaded model
         glm::mat4 model(1);
-        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
+
+        // =========================================================================
+        // POKEBOLA 1: Morada | Brillo 100% (shininess: 128.0f) | Especular Cian
+        // =========================================================================
+        model = glm::mat4(1);
+        model = glm::translate(model, glm::vec3(-13.75f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Todo con shininess 128.0f y especular Cian
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 0.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 128.0f);
+
+        // Parte superior (Morado)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.2f, 0.0f, 0.32f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.5f, 0.0f, 0.8f);
         pokearriba.Draw(lightingShader);
 
+        // Parte inferior (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
-        model = glm::mat4(1);
         pokeabajo.Draw(lightingShader);
 
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.0f, 0.0f, 0.0f);
-        model = glm::mat4(1);
+        // Cuerpo central (Negro)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
         cuerpo.Draw(lightingShader);
 
+        // Boton central (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
-        model = glm::mat4(1);
         centro.Draw(lightingShader);
 
-        glBindVertexArray(0);
 
-        //Pokebola2
-        // Draw the loaded model
+        // =========================================================================
+        // POKEBOLA 2: Rosa | Brillo 80% (shininess: 102.4f) | Especular Verde Lima
+        // =========================================================================
         model = glm::mat4(1);
-        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-        model = glm::translate(model, glm::vec3(5.0f, 0.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(-8.25f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
         glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Todo con shininess 102.4f y especular Verde Lima
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 0.2f, 1.0f, 0.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 102.4f);
+
+        // Parte superior (Rosa)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.4f, 0.16f, 0.28f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 0.4f, 0.7f);
         pokearriba.Draw(lightingShader);
 
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f,1.0f, 1.0f);
-        model = glm::mat4(1);
+        // Parte inferior (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
         pokeabajo.Draw(lightingShader);
 
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.0f, 0.0f, 0.0f);
-        model = glm::mat4(1);
+        // Cuerpo central (Negro)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
         cuerpo.Draw(lightingShader);
 
+        // Boton central (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        centro.Draw(lightingShader);
+
+
+        // =========================================================================
+        // POKEBOLA 3: Verde | Brillo 60% (shininess: 76.8f) | Especular Dorado
+        // =========================================================================
+        model = glm::mat4(1);
+        model = glm::translate(model, glm::vec3(-2.75f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
+        glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        // Todo con shininess 76.8f y especular Dorado
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 1.0f, 0.8f, 0.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 76.8f);
+
+        // Parte superior (Verde)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.0f, 0.32f, 0.08f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.0f, 0.8f, 0.2f);
+        pokearriba.Draw(lightingShader);
+
+        // Parte inferior (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        pokeabajo.Draw(lightingShader);
+
+        // Cuerpo central (Negro)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
+        cuerpo.Draw(lightingShader);
+
+        // Boton central (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        centro.Draw(lightingShader);
+
+
+        // =========================================================================
+        // POKEBOLA 4: Amarillo | Brillo 40% (shininess: 51.2f) | Especular Azul Rey
+        // =========================================================================
+        model = glm::mat4(1);
+        model = glm::translate(model, glm::vec3(2.75f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
+        glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        // Todo con shininess 51.2f y especular Azul Rey
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 0.0f, 0.4f, 1.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 51.2f);
+
+        // Parte superior (Amarillo)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.4f, 0.4f, 0.0f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 0.0f);
+        pokearriba.Draw(lightingShader);
+
+        // Parte inferior (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        pokeabajo.Draw(lightingShader);
+
+        // Cuerpo central (Negro)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
+        cuerpo.Draw(lightingShader);
+
+        // Boton central (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        centro.Draw(lightingShader);
+
+
+        // =========================================================================
+        // POKEBOLA 5: Naranja | Brillo 20% (shininess: 25.6f) | Especular Magenta
+        // =========================================================================
+        model = glm::mat4(1);
+        model = glm::translate(model, glm::vec3(8.25f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
+        glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        // Todo con shininess 25.6f y especular Magenta
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 1.0f, 0.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 25.6f);
+
+        // Parte superior (Naranja)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.4f, 0.2f, 0.0f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 0.5f, 0.0f);
+        pokearriba.Draw(lightingShader);
+
+        // Parte inferior (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        pokeabajo.Draw(lightingShader);
+
+        // Cuerpo central (Negro)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
+        cuerpo.Draw(lightingShader);
+
+        // Boton central (Blanco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        centro.Draw(lightingShader);
+
+
+        // =========================================================================
+        // POKEBOLA 6: Rojo | Brillo 0% (Opaco total, shininess: 1.0f, specular: 0.0f)
+        // =========================================================================
+        model = glm::mat4(1);
+        model = glm::translate(model, glm::vec3(13.75f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.2f, 1.2f, 1.2f));
+        glUniformMatrix4fv(glGetUniformLocation(lightingShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        // Todo con especular 0.0 (opaco en toda la pokebola)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.specular"), 0.0f, 0.0f, 0.0f);
+        glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 1.0f);
+
+        // Parte superior (Rojo opaco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.4f, 0.0f, 0.0f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 0.0f, 0.0f);
-        model = glm::mat4(1);
+        pokearriba.Draw(lightingShader);
+
+        // Parte inferior (Blanco opaco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
+        pokeabajo.Draw(lightingShader);
+
+        // Cuerpo central (Negro opaco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.05f, 0.05f, 0.05f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0.05f, 0.05f, 0.05f);
+        cuerpo.Draw(lightingShader);
+
+        // Boton central (Blanco opaco)
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.ambient"), 0.5f, 0.5f, 0.5f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 1.0f, 1.0f, 1.0f);
         centro.Draw(lightingShader);
 
         glBindVertexArray(0);
 
 
+        // =========================================================================
+        // LAMPARA (FUENTE DE LUZ)
+        // =========================================================================
         lampshader.Use();
         glUniformMatrix4fv(glGetUniformLocation(lampshader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lampshader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
         model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos + movelightPos);
-        model = glm::scale(model, glm::vec3(0.02f));
+        model = glm::translate(model, glm::vec3(lightPos.x + movelightPosX, lightPos.y + movelightPosY, lightPos.z + movelightPosZ));
+        model = glm::scale(model, glm::vec3(0.25f));
         glUniformMatrix4fv(glGetUniformLocation(lampshader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -336,7 +479,6 @@ void DoMovement()
         if (rot > -90.0f)
             rot -= 0.1f;
     }
-
 }
 
 // Is called whenever a key is pressed/released via GLFW
@@ -359,18 +501,40 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
         }
     }
 
+    // Mover luz en eje Y positivo con U
+    if (keys[GLFW_KEY_U])
+    {
+        movelightPosY += 0.2f;
+    }
+
+    // Mover luz en eje Y negativo con J
+    if (keys[GLFW_KEY_J])
+    {
+        movelightPosY -= 0.2f;
+    }
+
+    // Mover luz en eje X positivo con K
+    if (keys[GLFW_KEY_K])
+    {
+        movelightPosX += 0.2f;
+    }
+
+    // Mover luz en eje X negativo con H
+    if (keys[GLFW_KEY_H])
+    {
+        movelightPosX -= 0.2f;
+    }
+
+    // Mover luz en eje Z con O y L
     if (keys[GLFW_KEY_O])
     {
-        //activanim = true;
-        movelightPos += 0.1f;
+        movelightPosZ += 0.2f;
     }
 
     if (keys[GLFW_KEY_L])
     {
-        //activanim = true;
-        movelightPos -= 0.1f;
+        movelightPosZ -= 0.2f;
     }
-
 }
 
 void MouseCallback(GLFWwindow* window, double xPos, double yPos)
